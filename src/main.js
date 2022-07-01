@@ -1,89 +1,68 @@
-// The Vue build version to load with the `import` command
-// (runtime-only or standalone) has been set in webpack.base.conf with an alias.
-import Vue from 'vue'
-import Vuex from 'vuex'
-Vue.use(Vuex)
+import { createApp } from 'vue'
+import App from './App.vue'
+const app = createApp(App)
+import router from './router'
+import '@/styles/index.scss' // global css
 
-import App from './App'
-
-import router from "./router"; //引入路由实例与映射,把一堆路径单独放
-
-//引入mock数据，不需要时注释该行即可
-require('./mock/mock')
-
-//滑动验证码
-import SlideVerify from 'vue-monoplasty-slide-verify';
-Vue.use(SlideVerify);
-
-
-import ElementUI from "element-ui";
-// 按需导入 Button 和 Select 这两个组件,减少打包后项目的体积
-// import { Button, Select } from 'element-ui';
-// // 组件导入后需要在 Vue.use() 中进行注册
-// Vue.use(Button)
-// Vue.use(Select)
-import 'element-ui/lib/theme-chalk/index.css'; //全局引入element的样式
-Vue.use(ElementUI, {
-  size: "small"
-}); //使用Element-ui
-
-import VueECharts from "./components/ECharts";
-Vue.component("chart", VueECharts);
-
-import store from '@/store'
-//开发环境下才会引入mockjs
-//process.env.MOCK && require('@/mock')
-
-//本地存储
-import {
-  localStorageGetItem
-} from "./utils/index.js"
-
-Vue.config.productionTip = false
-
-//引入请求方法
-import {
-  post,
-  get
-} from './http.js'
-//指向原型 封装的方法
-Vue.prototype.$HTTPPost = post
-Vue.prototype.$HTTPGet = get
-/**
- * 限制非法进入权限
- */
-router.beforeEach((to, from, next) => {
-  if (to.matched.some(record => record.meta.requiresAuth)) {
-
-    if (!localStorageGetItem("a")) { //获取当前UUSERID 是否存在
-      next({
-        path: '/login',
-      })
-    } else {
-      next()
-    }
-  } else {
-    next() // 确保一定要调用 next()
-  }
+//import element-plus
+import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
+import settings from '@/settings'
+import zh from 'element-plus/es/locale/lang/zh-cn'
+let lang = { zh }
+app.use(ElementPlus, {
+  size: localStorage.getItem('size') || settings.defaultSize,
+  locale: lang[localStorage.getItem('language') || settings.defaultLanguage]
 })
+//i18n
+import i18n from '@/lang'
+app.use(i18n)
 
-/* eslint-disable no-new */
-var myVue = new Vue({
-  el: '#app',
-  router, //将配置好的路由在Vue实例中使用
-  store, //在main.js中导入store实例
-  components: {
-    App
-  },
-  template: '<App/>',
-  data: {
-    Bus: new Vue()
-  }
-  // mounted() {
-  //   var that = this;
-  //   window.homeTreeSelect = function(params) {
-  //     // 全局面包屑
-  //     that.$store.dispatch("setbreadcrumb", params);
-  //   };
-  // }
-})
+//global mixin
+// import elementMixin from '@/mixins/elementMixin'
+// app.mixin(elementMixin)
+// import commonMixin from '@/mixins/commonMixin'
+// app.mixin(commonMixin)
+// import routerMixin from '@/mixins/routerMixin'
+// app.mixin(routerMixin)
+//import axios req
+// import axiosReq from '@/utils/axiosReq'
+// app.config.globalProperties.$axiosReq = axiosReq
+
+//svg-icon
+//import svg-icon doc in  https://github.com/anncwb/vite-plugin-svg-icons/blob/main/README.zh_CN.md
+import 'virtual:svg-icons-register'
+import svgIcon from '@/icons/SvgIcon.vue'
+app.component('SvgIcon', svgIcon)
+
+//element svg icon
+import ElSvgIcon from '@/components/ElSvgIcon.vue'
+app.component('ElSvgIcon', ElSvgIcon)
+
+//global mount moment-mini
+// import $momentMini from 'moment-mini'
+// app.config.globalProperties.$momentMini = $momentMini
+
+//import global directive
+import directive from '@/directive'
+directive(app)
+
+//import global directive
+import components from '@/components'
+components(app)
+
+//import router  intercept
+import './permission'
+
+//error log  collection
+import errorLog from '@/hooks/useErrorLog'
+errorLog(app)
+
+//axios cancel req
+window.__axiosPromiseArr = []
+
+//pinia
+import { createPinia } from 'pinia'
+app.use(createPinia())
+
+app.use(router).mount('#app')
